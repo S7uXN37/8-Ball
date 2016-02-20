@@ -1,4 +1,6 @@
-package gui;
+package main;
+
+import java.util.ArrayList;
 
 import org.newdawn.slick.AppGameContainer;
 import org.newdawn.slick.BasicGame;
@@ -24,13 +26,16 @@ public class PoolGame extends BasicGame {
 		}
 	}
 	
+	// public GUI constants
 	public static final int WIDTH = 810;
 	public static final int HEIGHT = 420;
 	
+	// private GUI constants
 	private static final Color BCKG_COLOR = Color.lightGray;
 	private static final Color BORDER_COLOR = Color.black;
 	private static final Color POCKET_COLOR = Color.red;
 	
+	// private POCKETS constants
 	private static final Vector2f[] POCKETS = new Vector2f[]{
 			new Vector2f(0, 0),
 			new Vector2f(405, 0),
@@ -40,6 +45,19 @@ public class PoolGame extends BasicGame {
 			new Vector2f(810, 420)
 	};
 	private static final int POCKET_RADIUS = 30;
+	
+	// public BALL constants
+	private static final ImmutableVector2f[] BALL_SPAWNS = new ImmutableVector2f[]{
+			new ImmutableVector2f(200, 210)
+	};
+	private static final Color[] BALL_COLORS = new Color[]{
+			Color.white
+	};
+	private static final int BALL_RADIUS = 10;
+	
+	// private BALL variables
+	private ArrayList<Ball> balls;
+	
 	
 	public PoolGame(String title) {
 		super(title);
@@ -60,12 +78,27 @@ public class PoolGame extends BasicGame {
 		
 		g.setColor(BCKG_COLOR);
 		g.fillRect(2, 2, WIDTH - 4, HEIGHT - 4);
+		
+		for (Ball b : balls) {
+			g.setColor(b.color);
+			g.fillOval(b.pos.x - BALL_RADIUS, b.pos.y - BALL_RADIUS, BALL_RADIUS * 2, BALL_RADIUS * 2);
+		}
 	}
 
 	@Override
 	public void init(GameContainer gc) throws SlickException {
+		// add listeners
 		gc.getInput().addKeyListener(new InputListener());
 		gc.getInput().addMouseListener(new InputListener());
+		
+		// create balls
+		balls = new ArrayList<Ball>();
+		for (int i = 0; i < BALL_SPAWNS.length && i < BALL_COLORS.length; i++) {
+			ImmutableVector2f spawn = BALL_SPAWNS[i];
+			Color c = BALL_COLORS[i];
+			
+			balls.add(new Ball(c, spawn));
+		}
 	}
 
 	@Override
