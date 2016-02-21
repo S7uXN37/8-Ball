@@ -5,6 +5,7 @@ import org.newdawn.slick.geom.Vector2f;
 
 public class Ball {
 	public static final int BALL_RADIUS = 10;
+	private static final float minSpeed = 10f;
 	public enum BallType {STRIPES, SOLIDS, WHITE};
 	private static int nextId;
 	
@@ -38,12 +39,16 @@ public class Ball {
 		float friction = 1 * delta/1000f;
 		vel.add(vCopy.scale(-friction).makeVector2f());
 		
-		if (vel.length() < 10f) {
+		if (isStopped()) {
 			vel.scale(0f);
 		}
 		
 		// apply velocity
 		pos.add(vCopy.scale(delta/1000f).makeVector2f());
+	}
+	
+	public boolean isStopped() {
+		return vel.length() < minSpeed;
 	}
 	
 	public void addForce(Vector2f f) {

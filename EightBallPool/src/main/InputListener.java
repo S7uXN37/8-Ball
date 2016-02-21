@@ -1,7 +1,6 @@
 package main;
 
 import org.newdawn.slick.Input;
-import org.newdawn.slick.geom.Vector2f;
 
 public class InputListener implements org.newdawn.slick.InputListener {
 	private PoolGame game;
@@ -22,42 +21,66 @@ public class InputListener implements org.newdawn.slick.InputListener {
 		
 	}
 	
-	private int oldx, oldy;
+	private int oldx = -1;
+	private int oldy = -1;
 	
 	@Override
 	public void mousePressed(int button, int x, int y) {
+		if (!game.cueReady)
+			return;
+		
 		oldx = x;
 		oldy = y;
 	}
 	
-	private static final float maxSpeed = 1500;
-	private static final float minSpeed = 100;
+	private static final float maxSpeed = 300;
+	private static final float maxPullBackPx = 100;
+	private static final float powPerPx = 5f;
+	
 	@Override
 	public void mouseReleased(int button, int x, int y) {
-		Vector2f drag = new Vector2f(x - oldx, y - oldy);
-		drag.scale(-1f); // invert (pull back to push forward)
-		drag.scale(5f);
-		float dragLength = Math.min(Math.max(drag.length(), minSpeed), maxSpeed); // clamp to [100, 800]
-		dragLength -= minSpeed;
-		dragLength *= maxSpeed / (maxSpeed - minSpeed);
-		if (dragLength > 0) {
-			drag.scale(dragLength / drag.length());
-			game.shoot(drag);
+		if (!game.cueReady)
+			return;
+		
+		if (oldx == -1 && oldy == -1) {
+			return;
 		}
+		
+		ImmutableVector2f drag = new ImmutableVector2f(x - oldx, y - oldy);
+		float dragLength = getDragPower(drag);
+		
+		if (dragLength > 0) {
+			ImmutableVector2f proj = game.cueDragNorm.scale(game.cueDragNorm.dot(drag));
+			game.shoot(proj.scale(-powPerPx));
+		}
+		
+		oldx = -1;
+		oldy = -1;
 	}
 
 	@Override
 	public void mouseMoved(int oldx, int oldy, int newx, int newy) {
-		// TODO Auto-generated method stub
-		
+		game.updateCue(newx, newy);
 	}
 
 	@Override
 	public void mouseDragged(int oldx, int oldy, int newx, int newy) {
-		// TODO Auto-generated method stub
+		if (!game.cueReady)
+			return;
 		
+		game.pullCue(getDragPower(newx, newy) / (powPerPx * maxSpeed / maxPullBackPx));
 	}
-
+	
+	private float getDragPower(ImmutableVector2f drag) {
+		float projLength = game.cueDragNorm.dot(drag);
+		float dragPower = Math.min(Math.max(projLength, 0), maxSpeed);
+		return dragPower * powPerPx;
+	}
+	private float getDragPower(int x, int y) {
+		ImmutableVector2f drag = new ImmutableVector2f(x - this.oldx, y - this.oldy);
+		return getDragPower(drag);
+	}
+	
 	@Override
 	public void setInput(Input input) {
 		// TODO Auto-generated method stub

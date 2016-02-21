@@ -48,6 +48,10 @@ public class PoolGame extends BasicGame {
 	};
 	private static final int POCKET_RADIUS = 30;
 	
+	// private CUE constants
+	private static final float CUE_LENGTH = 200f;
+	private static final Color CUE_COLOR = new Color(0, 0, 0, 0.5f);
+	
 	// public BALL constants
 	private static final Vector2f racket = new Vector2f(600, 210);
 	private static final Ball[] BALL_PRESETS = new Ball[]{
@@ -77,6 +81,10 @@ public class PoolGame extends BasicGame {
 	// private BALL variables
 	private ArrayList<Ball> balls;
 	
+	// private CUE variables
+	protected ImmutableVector2f cueDragNorm = new ImmutableVector2f(1, 0);
+	private float cueDragLength = 0f;
+	protected boolean cueReady = true;
 	
 	public PoolGame(String title) {
 		super(title);
@@ -87,6 +95,7 @@ public class PoolGame extends BasicGame {
 	
 	@Override
 	public void render(GameContainer container, Graphics g) throws SlickException {
+		g.setAntiAlias(false);
 		g.setColor(BORDER_COLOR);
 		g.fillRect(0, 0, WIDTH, HEIGHT);
 		
@@ -98,9 +107,17 @@ public class PoolGame extends BasicGame {
 		g.setColor(BCKG_COLOR);
 		g.fillRect(2, 2, WIDTH - 4, HEIGHT - 4);
 		
+		g.setAntiAlias(true);
 		for (Ball b : balls) {
 			g.setColor(b.color);
 			g.fillOval(b.getPos().x - Ball.BALL_RADIUS, b.getPos().y - Ball.BALL_RADIUS, Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 2);
+		}
+		
+		if (cueReady) {
+			ImmutableVector2f cueStart = balls.get(0).getPos().add(cueDragNorm.scale(Ball.BALL_RADIUS)).add(cueDragNorm.scale(cueDragLength));
+			ImmutableVector2f cueEnd = cueStart.add(cueDragNorm.scale(CUE_LENGTH));
+			g.setColor(CUE_COLOR);
+			g.drawLine(cueStart.x, cueStart.y, cueEnd.x, cueEnd.y);
 		}
 	}
 
@@ -123,9 +140,13 @@ public class PoolGame extends BasicGame {
 
 	@Override
 	public void update(GameContainer container, int delta) throws SlickException {
+		boolean allStopped = true;
 		for (Ball b : balls) {
 			b.tick(delta);
+			allStopped &= b.isStopped();
 		}
+		cueReady = allStopped;
+		
 		for (Ball b : balls) {
 			for (Ball b2 : balls) {
 				if (b.id >= b2.id)
@@ -162,5 +183,23 @@ public class PoolGame extends BasicGame {
 	public void shoot(Vector2f shot) {
 		balls.get(0).addForce(shot);
 		System.out.println("shot: " + shot.length());
+		
+		pullCue(0f);
+	}
+	public void shoot(ImmutableVector2f shot) {
+		shoot(shot.makeVector2f());
+	}
+	
+	public void pullCue(float dragDist) {
+		cueDragLength = dragDist;
+	}
+	
+	public void updateCue(int x, int y) {
+		ImmutableVector2f toCursor = getWhitePos().sub(new Vector2f(x, y));
+		cueDragNorm = toCursor.normalise();
+	}
+	
+	public ImmutableVector2f getWhitePos() {
+		return balls.get(0).getPos();
 	}
 }
