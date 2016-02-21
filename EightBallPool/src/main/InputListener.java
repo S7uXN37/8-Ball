@@ -1,9 +1,15 @@
 package main;
 
 import org.newdawn.slick.Input;
+import org.newdawn.slick.geom.Vector2f;
 
 public class InputListener implements org.newdawn.slick.InputListener {
-
+	private PoolGame game;
+	
+	public InputListener(PoolGame parent) {
+		game = parent;
+	}
+	
 	@Override
 	public void mouseWheelMoved(int change) {
 		// TODO Auto-generated method stub
@@ -15,17 +21,29 @@ public class InputListener implements org.newdawn.slick.InputListener {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	private int oldx, oldy;
+	
 	@Override
 	public void mousePressed(int button, int x, int y) {
-		// TODO Auto-generated method stub
-		
+		oldx = x;
+		oldy = y;
 	}
-
+	
+	private static final float maxSpeed = 1500;
+	private static final float minSpeed = 100;
 	@Override
 	public void mouseReleased(int button, int x, int y) {
-		// TODO Auto-generated method stub
-		
+		Vector2f drag = new Vector2f(x - oldx, y - oldy);
+		drag.scale(-1f); // invert (pull back to push forward)
+		drag.scale(5f);
+		float dragLength = Math.min(Math.max(drag.length(), minSpeed), maxSpeed); // clamp to [100, 800]
+		dragLength -= minSpeed;
+		dragLength *= maxSpeed / (maxSpeed - minSpeed);
+		if (dragLength > 0) {
+			drag.scale(dragLength / drag.length());
+			game.shoot(drag);
+		}
 	}
 
 	@Override
@@ -49,7 +67,7 @@ public class InputListener implements org.newdawn.slick.InputListener {
 	@Override
 	public boolean isAcceptingInput() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override

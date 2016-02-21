@@ -10,6 +10,8 @@ import org.newdawn.slick.Graphics;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.geom.Vector2f;
 
+import main.Ball.BallType;
+
 public class PoolGame extends BasicGame {
 	public static void main(String[] args) {
 		try {
@@ -47,13 +49,9 @@ public class PoolGame extends BasicGame {
 	private static final int POCKET_RADIUS = 30;
 	
 	// public BALL constants
-	private static final ImmutableVector2f[] BALL_SPAWNS = new ImmutableVector2f[]{
-			new ImmutableVector2f(200, 210)
+	private static final Ball[] BALL_PRESETS = new Ball[]{
+			new Ball(Color.white, new Vector2f(200, 210), BallType.WHITE)
 	};
-	private static final Color[] BALL_COLORS = new Color[]{
-			Color.white
-	};
-	private static final int BALL_RADIUS = 10;
 	
 	// private BALL variables
 	private ArrayList<Ball> balls;
@@ -81,29 +79,68 @@ public class PoolGame extends BasicGame {
 		
 		for (Ball b : balls) {
 			g.setColor(b.color);
-			g.fillOval(b.pos.x - BALL_RADIUS, b.pos.y - BALL_RADIUS, BALL_RADIUS * 2, BALL_RADIUS * 2);
+			g.fillOval(b.pos.x - Ball.BALL_RADIUS, b.pos.y - Ball.BALL_RADIUS, Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 2);
 		}
 	}
 
 	@Override
 	public void init(GameContainer gc) throws SlickException {
 		// add listeners
-		gc.getInput().addKeyListener(new InputListener());
-		gc.getInput().addMouseListener(new InputListener());
+		gc.getInput().addKeyListener(new InputListener(this));
+		gc.getInput().addMouseListener(new InputListener(this));
 		
 		// create balls
 		balls = new ArrayList<Ball>();
-		for (int i = 0; i < BALL_SPAWNS.length && i < BALL_COLORS.length; i++) {
-			ImmutableVector2f spawn = BALL_SPAWNS[i];
-			Color c = BALL_COLORS[i];
+		for (Ball b : BALL_PRESETS) {
+			ImmutableVector2f spawn = new ImmutableVector2f(b.pos);
+			Color c = new Color(b.color);
+			BallType t = b.type;
 			
-			balls.add(new Ball(c, spawn));
+			balls.add(new Ball(c, spawn, t));
 		}
 	}
 
 	@Override
 	public void update(GameContainer container, int delta) throws SlickException {
-		// TODO Auto-generated method stub
-
+		for (Ball b : balls) {
+			b.tick(delta);
+		}
+		for (Ball b : balls) {
+			for (Ball b2 : balls) {
+				if (b.id == b2.id)
+					continue;
+				
+				Vector2f dist = b2.pos;
+				dist.sub(b.pos);
+				float l = dist.length();
+				
+				if (l < Ball.BALL_RADIUS * 2) {
+					// TODO
+					System.out.println("collision ball");
+				}
+			}
+			
+			if (b.pos.x - Ball.BALL_RADIUS < 0) {
+				// TODO
+				System.out.println("collision left");
+			}
+			if (b.pos.x + Ball.BALL_RADIUS > WIDTH) {
+				// TODO
+				System.out.println("collision right");
+			}
+			if (b.pos.y - Ball.BALL_RADIUS < 0) {
+				// TODO
+				System.out.println("collision up");
+			}
+			if (b.pos.y + Ball.BALL_RADIUS > HEIGHT) {
+				// TODO
+				System.out.println("collision down");
+			}
+		}
+	}
+	
+	public void shoot(Vector2f shot) {
+		balls.get(0).addForce(shot);
+		System.out.println("shot: " + shot.length());
 	}
 }
