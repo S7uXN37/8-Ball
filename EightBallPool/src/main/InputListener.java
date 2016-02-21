@@ -84,8 +84,14 @@ public class InputListener implements org.newdawn.slick.InputListener {
 
 	@Override
 	public void keyPressed(int key, char c) {
-		// TODO Auto-generated method stub
-		
+		switch (key) {
+		case Input.KEY_ESCAPE:
+			System.exit(0);
+			break;
+		case Input.KEY_SPACE:
+			// TODO do best shot
+			break;
+		}
 	}
 
 	@Override

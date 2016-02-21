@@ -49,11 +49,28 @@ public class Ball {
 	public void addForce(Vector2f f) {
 		vel.add(f);
 	}
+	public void addForce(ImmutableVector2f f) {
+		addForce(f.makeVector2f());
+	}
 	
-	public void collide (ImmutableVector2f normal) {
+	public void collideBorder (ImmutableVector2f normal) {
 		ImmutableVector2f n = normal.normalise();
 		ImmutableVector2f v = new ImmutableVector2f(vel);
 		ImmutableVector2f ref = v.sub( n.scale(2 * v.dot(n)) );
 		vel = ref.makeVector2f();
+	}
+	
+	public void collideBall(Ball b2) {
+		ImmutableVector2f toTarg = b2.getPos().sub(getPos());
+		ImmutableVector2f targNorm = toTarg.normalise();
+		ImmutableVector2f vRel = new ImmutableVector2f(vel).sub(b2.vel);
+		ImmutableVector2f velProj = targNorm.scale(vRel.dot(targNorm));
+		
+		addForce(velProj.scale(-1f));
+		b2.addForce(velProj);
+		
+		ImmutableVector2f displace = toTarg.sub(toTarg.normalise().scale(BALL_RADIUS * 2));
+		pos.add(displace.makeVector2f());
+		b2.pos.add(displace.scale(-1f).makeVector2f());
 	}
 }

@@ -475,6 +475,21 @@ public strictfp class ImmutableVector2f {
 
       return new ImmutableVector2f(x, y);
    }
+   
+   /**
+    * Subtract a vector from this vector, and return a new vector with the
+    * results.
+    * 
+    * @param v
+    *            The vector to subtract from this one
+    * @return a new vector with the results
+    */
+   public ImmutableVector2f sub(Vector2f v) {
+      float x = this.x - v.getX();
+      float y = this.y - v.getY();
+
+      return new ImmutableVector2f(x, y);
+   }
 
    /**
     * @see java.lang.Object#toString()

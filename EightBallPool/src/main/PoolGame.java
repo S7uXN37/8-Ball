@@ -49,8 +49,29 @@ public class PoolGame extends BasicGame {
 	private static final int POCKET_RADIUS = 30;
 	
 	// public BALL constants
+	private static final Vector2f racket = new Vector2f(600, 210);
 	private static final Ball[] BALL_PRESETS = new Ball[]{
-			new Ball(Color.white, new Vector2f(200, 210), BallType.WHITE)
+			new Ball(Color.white, new Vector2f(200, 210), BallType.WHITE),
+			
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * -4, Ball.BALL_RADIUS * 0).add(racket), BallType.SOLIDS),
+			
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * -2, Ball.BALL_RADIUS * 1).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * -2, Ball.BALL_RADIUS * -1).add(racket), BallType.SOLIDS),
+			
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 0, Ball.BALL_RADIUS * 0).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 0, Ball.BALL_RADIUS * 2).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 0, Ball.BALL_RADIUS * -2).add(racket), BallType.SOLIDS),
+
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * -3).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * -1).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 1).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 3).add(racket), BallType.SOLIDS),
+			
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 4, Ball.BALL_RADIUS * 0).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 4, Ball.BALL_RADIUS * 2).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 4, Ball.BALL_RADIUS * 4).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 4, Ball.BALL_RADIUS * -2).add(racket), BallType.SOLIDS),
+			new Ball(Color.red, new Vector2f(Ball.BALL_RADIUS * 4, Ball.BALL_RADIUS * -4).add(racket), BallType.SOLIDS),
 	};
 	
 	// private BALL variables
@@ -107,7 +128,7 @@ public class PoolGame extends BasicGame {
 		}
 		for (Ball b : balls) {
 			for (Ball b2 : balls) {
-				if (b.id == b2.id)
+				if (b.id >= b2.id)
 					continue;
 				
 				ImmutableVector2f dist = b2.getPos().sub(b.getPos());
@@ -115,25 +136,25 @@ public class PoolGame extends BasicGame {
 				
 				if (l < Ball.BALL_RADIUS * 2) {
 					System.out.println("collision ball");
-					b.collide(dist.scale(-1f).normalise());
+					b.collideBall(b2);
 				}
 			}
 			
 			if (b.getPos().x - Ball.BALL_RADIUS < 0) {
 				// left
-				b.collide(new ImmutableVector2f(1, 0));
+				b.collideBorder(new ImmutableVector2f(1, 0));
 			}
 			if (b.getPos().x + Ball.BALL_RADIUS > WIDTH) {
 				// right
-				b.collide(new ImmutableVector2f(-1, 0));
+				b.collideBorder(new ImmutableVector2f(-1, 0));
 			}
 			if (b.getPos().y - Ball.BALL_RADIUS < 0) {
 				// top
-				b.collide(new ImmutableVector2f(0, 1));
+				b.collideBorder(new ImmutableVector2f(0, 1));
 			}
 			if (b.getPos().y + Ball.BALL_RADIUS > HEIGHT) {
 				// bottom
-				b.collide(new ImmutableVector2f(0, -1));
+				b.collideBorder(new ImmutableVector2f(0, -1));
 			}
 		}
 	}
