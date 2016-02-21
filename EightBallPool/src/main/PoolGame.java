@@ -79,7 +79,7 @@ public class PoolGame extends BasicGame {
 		
 		for (Ball b : balls) {
 			g.setColor(b.color);
-			g.fillOval(b.pos.x - Ball.BALL_RADIUS, b.pos.y - Ball.BALL_RADIUS, Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 2);
+			g.fillOval(b.getPos().x - Ball.BALL_RADIUS, b.getPos().y - Ball.BALL_RADIUS, Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 2);
 		}
 	}
 
@@ -92,7 +92,7 @@ public class PoolGame extends BasicGame {
 		// create balls
 		balls = new ArrayList<Ball>();
 		for (Ball b : BALL_PRESETS) {
-			ImmutableVector2f spawn = new ImmutableVector2f(b.pos);
+			ImmutableVector2f spawn = new ImmutableVector2f(b.getPos());
 			Color c = new Color(b.color);
 			BallType t = b.type;
 			
@@ -110,31 +110,30 @@ public class PoolGame extends BasicGame {
 				if (b.id == b2.id)
 					continue;
 				
-				Vector2f dist = b2.pos;
-				dist.sub(b.pos);
+				ImmutableVector2f dist = b2.getPos().sub(b.getPos());
 				float l = dist.length();
 				
 				if (l < Ball.BALL_RADIUS * 2) {
-					// TODO
 					System.out.println("collision ball");
+					b.collide(dist.scale(-1f).normalise());
 				}
 			}
 			
-			if (b.pos.x - Ball.BALL_RADIUS < 0) {
-				// TODO
-				System.out.println("collision left");
+			if (b.getPos().x - Ball.BALL_RADIUS < 0) {
+				// left
+				b.collide(new ImmutableVector2f(1, 0));
 			}
-			if (b.pos.x + Ball.BALL_RADIUS > WIDTH) {
-				// TODO
-				System.out.println("collision right");
+			if (b.getPos().x + Ball.BALL_RADIUS > WIDTH) {
+				// right
+				b.collide(new ImmutableVector2f(-1, 0));
 			}
-			if (b.pos.y - Ball.BALL_RADIUS < 0) {
-				// TODO
-				System.out.println("collision up");
+			if (b.getPos().y - Ball.BALL_RADIUS < 0) {
+				// top
+				b.collide(new ImmutableVector2f(0, 1));
 			}
-			if (b.pos.y + Ball.BALL_RADIUS > HEIGHT) {
-				// TODO
-				System.out.println("collision down");
+			if (b.getPos().y + Ball.BALL_RADIUS > HEIGHT) {
+				// bottom
+				b.collide(new ImmutableVector2f(0, -1));
 			}
 		}
 	}

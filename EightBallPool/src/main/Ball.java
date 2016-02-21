@@ -9,11 +9,11 @@ public class Ball {
 	private static int nextId;
 	
 	public Color color;
-	public Vector2f pos;
 	public BallType type;
 	public int id;
 	
 	private Vector2f vel;
+	private Vector2f pos;
 	
 	public Ball(Color c, Vector2f spawnPos, BallType t) {
 		color = c;
@@ -26,6 +26,10 @@ public class Ball {
 	}
 	public Ball(Color c, ImmutableVector2f spawnPos, BallType t) {
 		this(c, spawnPos.makeVector2f(), t);
+	}
+	
+	public ImmutableVector2f getPos() {
+		return new ImmutableVector2f(pos);
 	}
 	
 	public void tick(int delta) {
@@ -44,5 +48,12 @@ public class Ball {
 	
 	public void addForce(Vector2f f) {
 		vel.add(f);
+	}
+	
+	public void collide (ImmutableVector2f normal) {
+		ImmutableVector2f n = normal.normalise();
+		ImmutableVector2f v = new ImmutableVector2f(vel);
+		ImmutableVector2f ref = v.sub( n.scale(2 * v.dot(n)) );
+		vel = ref.makeVector2f();
 	}
 }
