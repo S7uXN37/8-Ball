@@ -497,4 +497,14 @@ public strictfp class ImmutableVector2f {
    public String toString() {
       return "[ImmutableVector2f " + x + "," + y + " (" + length() + ")]";
    }
+
+/**
+ * @return Normalised perpendicular vector
+ */
+public ImmutableVector2f getPerpendicular() {
+	float x = this.x == 0 ? 1f / (this.x + 0.1f) : 1f / this.x;
+	float y = this.y == 0 ? 1f / (this.y + 0.1f) : 1f / this.y;
+	
+	return new ImmutableVector2f(x, y).normalise();
+}
 }

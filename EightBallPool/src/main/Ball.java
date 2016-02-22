@@ -7,7 +7,7 @@ public class Ball {
 	public static final int BALL_RADIUS = 10;
 	private static final float minSpeed = 10f;
 	public enum BallType {STRIPES, SOLIDS, WHITE};
-	private static int nextId;
+	private static int nextId = 0;
 	
 	public Color color;
 	public BallType type;

@@ -51,6 +51,7 @@ public class PoolGame extends BasicGame {
 	// private CUE constants
 	private static final float CUE_LENGTH = 200f;
 	private static final Color CUE_COLOR = new Color(0, 0, 0, 0.5f);
+	private static final Color PATH_COLOR = new Color(1f, 0, 0, 0.5f);
 	
 	// public BALL constants
 	private static final Vector2f racket = new Vector2f(600, 210);
@@ -85,6 +86,7 @@ public class PoolGame extends BasicGame {
 	protected ImmutableVector2f cueDragNorm = new ImmutableVector2f(1, 0);
 	private float cueDragLength = 0f;
 	protected boolean cueReady = true;
+	private float distToCollision = -1f;
 	
 	public PoolGame(String title) {
 		super(title);
@@ -118,6 +120,14 @@ public class PoolGame extends BasicGame {
 			ImmutableVector2f cueEnd = cueStart.add(cueDragNorm.scale(CUE_LENGTH));
 			g.setColor(CUE_COLOR);
 			g.drawLine(cueStart.x, cueStart.y, cueEnd.x, cueEnd.y);
+			
+			if (distToCollision != -1) {
+				ImmutableVector2f pathStart = balls.get(0).getPos().add(cueDragNorm.scale(-Ball.BALL_RADIUS));
+				ImmutableVector2f pathEnd = pathStart.add(cueDragNorm.scale(-distToCollision));
+				g.setColor(PATH_COLOR);
+				g.drawLine(pathStart.x, pathStart.y, pathEnd.x, pathEnd.y);
+				g.drawOval(pathEnd.x - Ball.BALL_RADIUS, pathEnd.y - Ball.BALL_RADIUS, Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 2);
+			}
 		}
 	}
 
@@ -176,6 +186,31 @@ public class PoolGame extends BasicGame {
 			if (b.getPos().y + Ball.BALL_RADIUS > HEIGHT) {
 				// bottom
 				b.collideBorder(new ImmutableVector2f(0, -1));
+			}
+		}
+		
+		// calculate estimated path of white firing along -cueDragNorm
+		ImmutableVector2f rayCentre = getWhitePos();
+		
+		for (float dist = 0; dist < Math.sqrt(WIDTH * WIDTH + HEIGHT * HEIGHT) + 500; dist += 1f) {
+			distToCollision = -1;
+			
+			ImmutableVector2f distPos = rayCentre.add(cueDragNorm.scale(-dist));
+			
+			for (Ball b : balls) {
+				if (b.type == BallType.WHITE)
+					continue;
+				
+				ImmutableVector2f toBall = distPos.sub(b.getPos());
+				
+				if (toBall.length() <= 2 * Ball.BALL_RADIUS) {
+					distToCollision = dist;
+					break;
+				}
+			}
+			
+			if (distToCollision != -1) {
+				break;
 			}
 		}
 	}
