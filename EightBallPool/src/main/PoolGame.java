@@ -123,7 +123,7 @@ public class PoolGame extends BasicGame {
 			
 			if (distToCollision != -1) {
 				ImmutableVector2f pathStart = balls.get(0).getPos().add(cueDragNorm.scale(-Ball.BALL_RADIUS));
-				ImmutableVector2f pathEnd = pathStart.add(cueDragNorm.scale(-distToCollision));
+				ImmutableVector2f pathEnd = pathStart.add(cueDragNorm.scale(-(distToCollision - Ball.BALL_RADIUS)));
 				g.setColor(PATH_COLOR);
 				g.drawLine(pathStart.x, pathStart.y, pathEnd.x, pathEnd.y);
 				g.drawOval(pathEnd.x - Ball.BALL_RADIUS, pathEnd.y - Ball.BALL_RADIUS, Ball.BALL_RADIUS * 2, Ball.BALL_RADIUS * 2);
@@ -189,6 +189,10 @@ public class PoolGame extends BasicGame {
 			}
 		}
 		
+		updateDistToCollision();
+	}
+	
+	private void updateDistToCollision() {
 		// calculate estimated path of white firing along -cueDragNorm
 		ImmutableVector2f rayCentre = getWhitePos();
 		
@@ -205,19 +209,25 @@ public class PoolGame extends BasicGame {
 				
 				if (toBall.length() <= 2 * Ball.BALL_RADIUS) {
 					distToCollision = dist;
-					break;
+					return;
 				}
 			}
 			
-			if (distToCollision != -1) {
-				break;
-			} else if (distPos.x < 0 || distPos.x >= WIDTH || distPos.y < 0 || distPos.y >= HEIGHT) {
+			if (
+					distPos.x - Ball.BALL_RADIUS < 0 ||
+					distPos.x - Ball.BALL_RADIUS >= WIDTH ||
+					distPos.x + Ball.BALL_RADIUS < 0 ||
+					distPos.x + Ball.BALL_RADIUS >= WIDTH ||
+					distPos.y - Ball.BALL_RADIUS < 0 ||
+					distPos.y - Ball.BALL_RADIUS >= HEIGHT ||
+					distPos.y + Ball.BALL_RADIUS < 0 ||
+					distPos.y + Ball.BALL_RADIUS >= HEIGHT
+			) {
 				distToCollision = dist;
-				break;
+				return;
 			}
 		}
 	}
-	
 	public void shoot(Vector2f shot) {
 		balls.get(0).addForce(shot);
 		System.out.println("shot: " + shot.length());
