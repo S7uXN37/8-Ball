@@ -192,7 +192,7 @@ public class PoolGame extends BasicGame {
 		// calculate estimated path of white firing along -cueDragNorm
 		ImmutableVector2f rayCentre = getWhitePos();
 		
-		for (float dist = 0; dist < Math.sqrt(WIDTH * WIDTH + HEIGHT * HEIGHT) + 500; dist += 1f) {
+		for (float dist = 1; dist < Math.sqrt(WIDTH * WIDTH + HEIGHT * HEIGHT) + 500; dist += 1f) {
 			distToCollision = -1;
 			
 			ImmutableVector2f distPos = rayCentre.add(cueDragNorm.scale(-dist));
@@ -210,6 +210,9 @@ public class PoolGame extends BasicGame {
 			}
 			
 			if (distToCollision != -1) {
+				break;
+			} else if (distPos.x < 0 || distPos.x >= WIDTH || distPos.y < 0 || distPos.y >= HEIGHT) {
+				distToCollision = dist;
 				break;
 			}
 		}
