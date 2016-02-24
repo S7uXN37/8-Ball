@@ -51,7 +51,7 @@ public class InputListener implements org.newdawn.slick.InputListener {
 		
 		if (dragLength > 0) {
 			ImmutableVector2f proj = game.cueDragNorm.scale(game.cueDragNorm.dot(drag));
-			game.shoot(proj.scale(-powPerPx));
+			game.shoot(proj.normalise().scale(-dragLength));
 		}
 		
 		oldx = -1;
@@ -183,5 +183,8 @@ public class InputListener implements org.newdawn.slick.InputListener {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	public static float getMaxShotStrength() {
+		return maxSpeed * powPerPx;
+	}
 }

@@ -75,17 +75,17 @@ public class PoolGame extends BasicGame {
 			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * 0).add(racket), BallType.SOLIDS),
 			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * 2).add(racket), BallType.SOLIDS),
 			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * -2).add(racket), BallType.SOLIDS),
-//
-//			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -3).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -1).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 1).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 3).add(racket), BallType.SOLIDS),
-//			
-//			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 0).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 2).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 4).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * -2).add(racket), BallType.SOLIDS),
-//			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * -4).add(racket), BallType.SOLIDS),
+
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -3).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -1).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 1).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 3).add(racket), BallType.SOLIDS),
+			
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 0).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 2).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 4).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * -2).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * -4).add(racket), BallType.SOLIDS),
 	};
 	
 	// private BALL variables
@@ -434,7 +434,8 @@ public class PoolGame extends BasicGame {
 				// if a ball was hit
 				if (ret.getValue() != null) {
 					// get the new velocity vector of the ball
-					ImmutableVector2f newVelNorm = ret.getValue().get(1).normalise();
+					ImmutableVector2f newVel = ret.getValue().get(1);
+					ImmutableVector2f newVelNorm = newVel.normalise();
 					
 					// look at each pocket
 					for (ImmutableVector2f pock : POCKETS) {
@@ -443,11 +444,11 @@ public class PoolGame extends BasicGame {
 						ImmutableVector2f toPockNorm = toPock.normalise();
 						
 						// l is how off-target we are (length of: actual velocity - perfect velocity)
-						float l = newVelNorm.sub(toPockNorm).length() * toPock.length() / toBall.length();
+						float l = newVelNorm.sub(toPockNorm).length() * toPock.length() / toBall.length() * newVel.length();
 						Map.Entry<Float, ArrayList<ImmutableVector2f>> ret2 = raycast(b.getPos(), newVelNorm);
 						if (ret2.getValue() != null) {
 							// punish score if other ball in path
-							l += 1000;
+							l += 10000;
 						}
 						
 						if (l < off) {
@@ -460,7 +461,7 @@ public class PoolGame extends BasicGame {
 			
 			// add the best shot (if possible)
 			if (best != null)
-				possibleShots.put(best.scale(800f), off);
+				possibleShots.put(best.scale(InputListener.getMaxShotStrength()), off);
 		}
 		
 		// add all shots, so they can be sorted
