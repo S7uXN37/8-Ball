@@ -112,7 +112,8 @@ public class InputListener implements org.newdawn.slick.InputListener {
 			System.exit(0);
 			break;
 		case Input.KEY_SPACE:
-			// TODO do best shot
+			if (game.cueReady)
+				game.aiShoot();
 			break;
 		}
 	}

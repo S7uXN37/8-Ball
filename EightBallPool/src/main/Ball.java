@@ -65,6 +65,10 @@ public class Ball {
 		
 		// apply velocity
 		pos.add(vCopy.scale(delta/1000f).makeVector2f());
+		
+		if (pos.x < 0 || pos.x >= PoolGame.WIDTH || pos.y < 0 || pos.y >= PoolGame.HEIGHT) {
+			pocket();
+		}
 	}
 	
 	public boolean isStopped() {
