@@ -195,6 +195,9 @@ public class PoolGame extends BasicGame {
 
 	@Override
 	public void update(GameContainer container, int delta) throws SlickException {
+		// time dilation
+		delta *= 2;
+		
 		boolean allStopped = true;
 		for (Ball b : balls) {
 			b.tick(delta);
@@ -277,7 +280,7 @@ public class PoolGame extends BasicGame {
 		// calculate estimated path of white firing along -cueDragNorm
 		ImmutableVector2f rayCentre = getWhitePos();
 		
-		Map.Entry<Float, ArrayList<ImmutableVector2f>> ret = raycast(rayCentre, cueDragNorm.scale(-1f));
+		Map.Entry<Float, ArrayList<ImmutableVector2f>> ret = raycast(rayCentre, cueDragNorm.scale(-1f), -1);
 		distToCollision = ret.getKey();
 
 		estCollisions = ret.getValue();
@@ -309,19 +312,21 @@ public class PoolGame extends BasicGame {
 		return balls.get(0);
 	}
 	
-	private Map.Entry<Float, ArrayList<ImmutableVector2f>> raycast(ImmutableVector2f pos, ImmutableVector2f dir) {
+	private Map.Entry<Float, ArrayList<ImmutableVector2f>> raycast(ImmutableVector2f pos, ImmutableVector2f dir, int idIgnore) {
+		ImmutableVector2f dirNorm = dir.normalise();
+		
 		for (float dist = 1; dist < Math.sqrt(WIDTH * WIDTH + HEIGHT * HEIGHT) + 500; dist += 1f) {
-			ImmutableVector2f distPos = pos.add(dir.scale(dist));
+			ImmutableVector2f distPos = pos.add(dirNorm.scale(dist));
 			
 			for (Ball b : balls) {
-				if (b.type == BallType.WHITE || b.pocketed)
+				if (b.type == BallType.WHITE || b.pocketed || b.id == idIgnore)
 					continue;
 				
-				ImmutableVector2f toBall = distPos.sub(b.getPos());
+				ImmutableVector2f toBall = b.getPos().sub(distPos);
 				
 				if (toBall.length() <= 2 * Ball.RADIUS) {
 					Ball testBall = new Ball(distPos, BallType.WHITE);
-					testBall.addForce(dir.scale(20f));
+					testBall.addForce(dirNorm.scale(20f));
 					
 					final float retDist = dist;
 					final ArrayList<ImmutableVector2f> retColl = Ball.ballCollision(testBall, b, false);
@@ -408,61 +413,53 @@ public class PoolGame extends BasicGame {
 		// must be assigned from other map
 		HashMap<ImmutableVector2f, Float> possibleShots = new HashMap<ImmutableVector2f, Float>();
 		
-		// look at each ball
+		// look at each target ball
 		for (Ball b : balls) {
 			if (b.type == BallType.WHITE || b.pocketed)
 				continue;
 			
-			// get the shot vector straight to the ball
-			ImmutableVector2f toBall = b.getPos().sub(getWhitePos());
+			// find best shot
+			ImmutableVector2f bestShot = null;
+			float bestScore = -Float.MAX_VALUE;
 			
-			// keeps track of how off-target the best shot is
-			float off = -10000000f;
-			// the best shot (normalised)
-			ImmutableVector2f best = null;
-			
-			// calculate range of shots that would approx. hit the ball
-			double thetaStart = toBall.getTheta();
-			double thetaOff = Math.atan(Ball.RADIUS * 2f / toBall.length()) * 180d / Math.PI * 2;
-			double thetaStep = thetaOff / 100f;
-			
-			// for each shot, called test
-			for (double theta = thetaStart - thetaOff; theta < thetaStart + thetaOff; theta += thetaStep) {
-				ImmutableVector2f test = new ImmutableVector2f(theta);
-				// estimate a collision
-				Map.Entry<Float, ArrayList<ImmutableVector2f>> ret = raycast(getWhitePos(), test);
+			for (ImmutableVector2f pocket : POCKETS) {
+				ImmutableVector2f optVel = pocket.sub(b.getPos()).normalise();
+				ImmutableVector2f optCollPoint = b.getPos().add(optVel.scale(-2f * Ball.RADIUS)); // position of white on collision event
+				ImmutableVector2f optShot = optCollPoint.sub(getWhitePos());
 				
-				// if a ball was hit
-				if (ret.getValue() != null) {
-					// get the new velocity vector of the ball
-					ImmutableVector2f newVel = ret.getValue().get(1);
-					ImmutableVector2f newVelNorm = newVel.normalise();
+				// if vectors point roughly in the same direction (angle between < 90°), add to map
+				if (optShot.dot(optVel) > 0) {
+					Map.Entry<Float, ArrayList<ImmutableVector2f>> raycastWhite = raycast(getWhitePos(), optShot, getWhite().id);
 					
-					// look at each pocket
-					for (ImmutableVector2f pock : POCKETS) {
-						// calculate the best velocity vector
-						ImmutableVector2f toPock = pock.sub(b.getPos());
-						ImmutableVector2f toPockNorm = toPock.normalise();
-						
-						// how off-target we are (length of: actual velocity - perfect velocity)
-						float score = -1 * newVelNorm.sub(toPockNorm).length() + toPock.length() + -1 * toBall.length() + newVel.length();
-						Map.Entry<Float, ArrayList<ImmutableVector2f>> ret2 = raycast(b.getPos(), newVelNorm);
-						if (ret2.getValue() != null) {
-							// punish score if other ball in path
-							score -= 10000;
-						}
-						
-						if (score > off) {
-							off = score;
-							best = test;
-						}
+					// don't add if a collision happens before we reach the ball
+					if (raycastWhite.getKey() < optShot.length() - 3 * Ball.RADIUS)
+						continue;
+					
+					Map.Entry<Float, ArrayList<ImmutableVector2f>> raycastBall = raycast(b.getPos(), optVel, b.id);
+					
+					// don't add if collision doesn't trigger (angle too flat?)
+					if (raycastWhite.getValue() == null)
+						continue;
+					
+					// score = efficiency of shot
+					float score = raycastWhite.getValue().get(1).length();
+					
+					// decrease score if ball rebounds
+					if (raycastBall.getValue() != null) {
+						score -= 10f;
+					}
+					
+					if (score > bestScore) {
+						bestShot = optShot;
+						bestScore = score;
 					}
 				}
 			}
 			
-			// add the best shot (if possible)
-			if (best != null)
-				possibleShots.put(best.scale(InputListener.getMaxShotStrength()), off);
+			// add the best shot
+			if (bestShot != null) {
+				possibleShots.put(bestShot.normalise().scale(InputListener.getMaxShotStrength()), bestScore);
+			}
 		}
 		
 		// add all shots, so they can be sorted
@@ -471,7 +468,7 @@ public class PoolGame extends BasicGame {
 		// if there are any possible shots
 		if (sortedShots.size() > 0) {
 			// choose the one with the largest score and shoot
-			final Map.Entry<ImmutableVector2f, Float> chosen = sortedShots.first();
+			final Map.Entry<ImmutableVector2f, Float> chosen = sortedShots.last();
 			
 			new Thread(new Runnable() {
 				
