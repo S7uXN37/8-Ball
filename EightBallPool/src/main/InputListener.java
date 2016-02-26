@@ -3,10 +3,10 @@ package main;
 import org.newdawn.slick.Input;
 
 public class InputListener implements org.newdawn.slick.InputListener {
-	private PoolGame game;
+	private PoolTable table;
 	
-	public InputListener(PoolGame parent) {
-		game = parent;
+	public InputListener(PoolTable parent) {
+		table = parent;
 	}
 	
 	@Override
@@ -26,7 +26,7 @@ public class InputListener implements org.newdawn.slick.InputListener {
 	
 	@Override
 	public void mousePressed(int button, int x, int y) {
-		if (!game.cueReady)
+		if (!table.cueReady)
 			return;
 		
 		oldx = x;
@@ -39,7 +39,7 @@ public class InputListener implements org.newdawn.slick.InputListener {
 	
 	@Override
 	public void mouseReleased(int button, int x, int y) {
-		if (!game.cueReady)
+		if (!table.cueReady)
 			return;
 		
 		if (oldx == -1 && oldy == -1) {
@@ -50,8 +50,8 @@ public class InputListener implements org.newdawn.slick.InputListener {
 		float dragLength = getDragPower(drag);
 		
 		if (dragLength > 0) {
-			ImmutableVector2f proj = game.cueDragNorm.scale(game.cueDragNorm.dot(drag));
-			game.shoot(proj.normalise().scale(-dragLength));
+			ImmutableVector2f proj = table.cueDragNorm.scale(table.cueDragNorm.dot(drag));
+			table.shoot(proj.normalise().scale(-dragLength));
 		}
 		
 		oldx = -1;
@@ -60,19 +60,19 @@ public class InputListener implements org.newdawn.slick.InputListener {
 
 	@Override
 	public void mouseMoved(int oldx, int oldy, int newx, int newy) {
-		game.updateCue(newx, newy);
+		table.updateCue(newx, newy);
 	}
 
 	@Override
 	public void mouseDragged(int oldx, int oldy, int newx, int newy) {
-		if (!game.cueReady)
+		if (!table.cueReady)
 			return;
 		
-		game.pullCue(getDragPower(newx, newy) / (powPerPx * maxSpeed / maxPullBackPx));
+		table.pullCue(getDragPower(newx, newy) / (powPerPx * maxSpeed / maxPullBackPx));
 	}
 	
 	private float getDragPower(ImmutableVector2f drag) {
-		float projLength = game.cueDragNorm.dot(drag);
+		float projLength = table.cueDragNorm.dot(drag);
 		float dragPower = Math.min(Math.max(projLength, 0), maxSpeed);
 		return dragPower * powPerPx;
 	}
@@ -112,8 +112,8 @@ public class InputListener implements org.newdawn.slick.InputListener {
 			System.exit(0);
 			break;
 		case Input.KEY_SPACE:
-			if (game.cueReady)
-				game.aiShoot();
+			if (table.cueReady)
+				table.aiShoot();
 			break;
 		}
 	}
