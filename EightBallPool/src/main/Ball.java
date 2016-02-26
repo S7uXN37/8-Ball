@@ -87,6 +87,10 @@ public class Ball {
 		ImmutableVector2f v = new ImmutableVector2f(vel);
 		ImmutableVector2f ref = v.sub( n.scale(2 * v.dot(n)) );
 		vel = ref.makeVector2f();
+		
+		float x = Math.max(RADIUS, Math.min(pos.x, PoolGame.WIDTH - RADIUS));
+		float y = Math.max(RADIUS, Math.min(pos.y, PoolGame.HEIGHT - RADIUS));
+		pos = new Vector2f(x, y);
 	}
 	
 	public static ArrayList<ImmutableVector2f> ballCollision(Ball b1, Ball b2, boolean apply) {

@@ -417,16 +417,17 @@ public class PoolGame extends BasicGame {
 			ImmutableVector2f toBall = b.getPos().sub(getWhitePos());
 			
 			// keeps track of how off-target the best shot is
-			float off = Float.MAX_VALUE;
+			float off = -10000000f;
 			// the best shot (normalised)
 			ImmutableVector2f best = null;
 			
 			// calculate range of shots that would approx. hit the ball
+			double thetaStart = toBall.getTheta();
 			double thetaOff = Math.atan(Ball.RADIUS * 2f / toBall.length()) * 180d / Math.PI * 2;
 			double thetaStep = thetaOff / 100f;
 			
 			// for each shot, called test
-			for (double theta = toBall.getTheta() - thetaOff; theta < toBall.getTheta() + thetaOff; theta += thetaStep) {
+			for (double theta = thetaStart - thetaOff; theta < thetaStart + thetaOff; theta += thetaStep) {
 				ImmutableVector2f test = new ImmutableVector2f(theta);
 				// estimate a collision
 				Map.Entry<Float, ArrayList<ImmutableVector2f>> ret = raycast(getWhitePos(), test);
@@ -443,16 +444,16 @@ public class PoolGame extends BasicGame {
 						ImmutableVector2f toPock = pock.sub(b.getPos());
 						ImmutableVector2f toPockNorm = toPock.normalise();
 						
-						// l is how off-target we are (length of: actual velocity - perfect velocity)
-						float l = newVelNorm.sub(toPockNorm).length() * toPock.length() / toBall.length() * newVel.length();
+						// how off-target we are (length of: actual velocity - perfect velocity)
+						float score = -1 * newVelNorm.sub(toPockNorm).length() + toPock.length() + -1 * toBall.length() + newVel.length();
 						Map.Entry<Float, ArrayList<ImmutableVector2f>> ret2 = raycast(b.getPos(), newVelNorm);
 						if (ret2.getValue() != null) {
 							// punish score if other ball in path
-							l += 10000;
+							score -= 10000;
 						}
 						
-						if (l < off) {
-							off = l;
+						if (score > off) {
+							off = score;
 							best = test;
 						}
 					}
@@ -469,8 +470,8 @@ public class PoolGame extends BasicGame {
 		
 		// if there are any possible shots
 		if (sortedShots.size() > 0) {
-			// choose the one with the lowest off-target value and shoot
-			final Map.Entry<ImmutableVector2f, Float> chosen = sortedShots.last();
+			// choose the one with the largest score and shoot
+			final Map.Entry<ImmutableVector2f, Float> chosen = sortedShots.first();
 			
 			new Thread(new Runnable() {
 				
