@@ -339,7 +339,11 @@ public strictfp class ImmutableVector2f {
     */
    public ImmutableVector2f normalise() {
       float l = length();
-
+      
+      if (l == 0f) {
+          return new ImmutableVector2f(0, 0);
+      }
+      
       float x = this.x / l;
       float y = this.y / l;
       return new ImmutableVector2f(x, y);

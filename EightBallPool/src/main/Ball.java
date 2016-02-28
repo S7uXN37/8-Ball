@@ -11,6 +11,7 @@ public class Ball {
 	private static final Color STRIPE_COLOR = Color.blue;
 	private static final Color WHITE_COLOR = Color.white;
 	private static final float minSpeed = 10f;
+	private static final float fricAcc = -1f;
 	public enum BallType {STRIPES, SOLIDS, WHITE};
 	private static int nextId = 0;
 	
@@ -56,8 +57,8 @@ public class Ball {
 	public void tick(int delta) {
 		// account for friction
 		ImmutableVector2f vCopy = new ImmutableVector2f(vel);
-		float friction = 1 * delta/1000f;
-		vel.add(vCopy.scale(-friction).makeVector2f());
+		float friction = Math.min(0, fricAcc * delta/1000f);
+		addForce(vCopy.scale(friction).makeVector2f());
 		
 		if (isStopped()) {
 			vel.scale(0f);
