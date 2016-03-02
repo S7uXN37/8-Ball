@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Map.Entry;
+import java.util.SortedSet;
 
 import org.newdawn.slick.geom.Vector2f;
 
@@ -96,82 +97,86 @@ public class PoolTable {
 	private Map.Entry<Float, ArrayList<ImmutableVector2f>> raycast(ImmutableVector2f pos, ImmutableVector2f dir, int idIgnore) {
 		ImmutableVector2f dirNorm = dir.normalise();
 		
-		for (float dist = 1; dist < Math.sqrt(PoolGame.WIDTH * PoolGame.WIDTH + PoolGame.HEIGHT * PoolGame.HEIGHT) + 500; dist += 1f) {
-			ImmutableVector2f distPos = pos.add(dirNorm.scale(dist));
+		SortedSet<Map.Entry<Float, ArrayList<ImmutableVector2f>>> ballData =
+				new TreeSet<Map.Entry<Float, ArrayList<ImmutableVector2f>>> (
+						new Comparator<Map.Entry<Float, ArrayList<ImmutableVector2f>>>() {
+							
+							@Override
+							public int compare(Entry<Float, ArrayList<ImmutableVector2f>> arg0,
+									Entry<Float, ArrayList<ImmutableVector2f>> arg1) {
+								return arg0.getKey().compareTo(arg1.getKey());
+							}
+						}
+				);
+		
+		for (Ball b : balls) {
+			if (b.type == BallType.WHITE || b.pocketed || b.id == idIgnore)
+				continue;
 			
-			for (Ball b : balls) {
-				if (b.type == BallType.WHITE || b.pocketed || b.id == idIgnore)
-					continue;
-				
-				ImmutableVector2f toBall = b.getPos().sub(distPos);
-				
-				if (toBall.length() <= 2 * Ball.RADIUS) {
-					Ball testBall = new Ball(distPos, BallType.WHITE);
-					testBall.addForce(dirNorm.scale(20f));
-					
-					final float retDist = dist;
-					final ArrayList<ImmutableVector2f> retColl = Ball.ballCollision(testBall, b, false);
-					return new Map.Entry<Float, ArrayList<ImmutableVector2f>>() {
-
-						@Override
-						public Float getKey() {
-							return retDist;
-						}
-
-						@Override
-						public ArrayList<ImmutableVector2f> getValue() {
-							return retColl;
-						}
-
-						@Override
-						public ArrayList<ImmutableVector2f> setValue(ArrayList<ImmutableVector2f> value) {
-							return null;
-						}
-					};
-				}
-			}
+			ImmutableVector2f pMinusA = b.getPos().sub(pos);
+			float projLength = pMinusA.dot(dirNorm);
+			if (projLength < 0)
+				continue;
 			
-			if (
-					distPos.x - Ball.RADIUS < 0 ||
-					distPos.x - Ball.RADIUS >= PoolGame.WIDTH ||
-					distPos.x + Ball.RADIUS < 0 ||
-					distPos.x + Ball.RADIUS >= PoolGame.WIDTH ||
-					distPos.y - Ball.RADIUS < 0 ||
-					distPos.y - Ball.RADIUS >= PoolGame.HEIGHT ||
-					distPos.y + Ball.RADIUS < 0 ||
-					distPos.y + Ball.RADIUS >= PoolGame.HEIGHT
-			) {
-				final float retDist = dist;
-				return new Map.Entry<Float, ArrayList<ImmutableVector2f>>() {
-
-					@Override
-					public Float getKey() {
-						return retDist;
-					}
-
-					@Override
-					public ArrayList<ImmutableVector2f> getValue() {
-						return null;
-					}
-
-					@Override
-					public ArrayList<ImmutableVector2f> setValue(ArrayList<ImmutableVector2f> value) {
-						return null;
-					}
-				};
+			ImmutableVector2f proj = dirNorm.scale(projLength);
+			ImmutableVector2f distPos = pos.add(proj);
+			
+			ImmutableVector2f toBall = b.getPos().sub(distPos);
+			
+			if (toBall.length() <= 2 * Ball.RADIUS) {
+				float factor = (float) Math.sqrt((Ball.RADIUS * 2) * (Ball.RADIUS * 2) - distPos.sub(b.getPos()).lengthSquared());
+				ImmutableVector2f displacement = proj.normalise().scale(factor);
+				ImmutableVector2f collPos = distPos.sub(displacement);
+				ballData.add( getBallRaycastData(collPos.sub(pos).length(), dirNorm, collPos, b) );
 			}
 		}
 		
+		if (ballData.size() > 0) {
+			return ballData.first();
+		}
+		
+		float dx = dirNorm.x > 0 ? PoolGame.WIDTH - pos.x : pos.x;
+		float dy = dirNorm.y > 0 ? PoolGame.HEIGHT - pos.y : pos.y;
+		dx -= Ball.RADIUS;
+		dy -= Ball.RADIUS;
+		float distRightLeft = dirNorm.x == 0 ? Float.POSITIVE_INFINITY : Math.abs(dx / dirNorm.x);
+		float distUpDown = dirNorm.y == 0 ? Float.POSITIVE_INFINITY : Math.abs(dy / dirNorm.y);
+		
+		final float retDist = Math.min(distRightLeft, distUpDown);
+		return new Map.Entry<Float, ArrayList<ImmutableVector2f>>() {
+			@Override
+			public Float getKey() {
+				return retDist;
+			}
+			
+			@Override
+			public ArrayList<ImmutableVector2f> getValue() {
+				return null;
+			}
+			
+			@Override
+			public ArrayList<ImmutableVector2f> setValue(ArrayList<ImmutableVector2f> value) {
+				return null;
+			}
+		};
+	}
+	
+	private Entry<Float, ArrayList<ImmutableVector2f>> getBallRaycastData(float dist, ImmutableVector2f velNorm, ImmutableVector2f collPos, Ball b) {
+		Ball testBall = new Ball(collPos, BallType.WHITE);
+		testBall.addForce(velNorm.scale(20f));
+		
+		final float retDist = dist;
+		final ArrayList<ImmutableVector2f> retColl = Ball.ballCollision(testBall, b, false);
 		return new Map.Entry<Float, ArrayList<ImmutableVector2f>>() {
 
 			@Override
 			public Float getKey() {
-				return -1f;
+				return retDist;
 			}
 
 			@Override
 			public ArrayList<ImmutableVector2f> getValue() {
-				return null;
+				return retColl;
 			}
 
 			@Override
@@ -180,7 +185,6 @@ public class PoolTable {
 			}
 		};
 	}
-	
 	public void aiShoot() {
 		// set of entries, sorted by values
 		TreeSet<Map.Entry<ImmutableVector2f, Float>> sortedShots = new TreeSet<Map.Entry<ImmutableVector2f, Float>> (
