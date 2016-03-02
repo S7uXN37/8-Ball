@@ -14,12 +14,12 @@ import main.Ball.BallType;
 public class PoolTable {
 	// public POCKETS constants
 	public static final ImmutableVector2f[] POCKETS = new ImmutableVector2f[]{
-			new ImmutableVector2f(0, 0),
-			new ImmutableVector2f(405, 0),
-			new ImmutableVector2f(810, 0),
-			new ImmutableVector2f(0, 420),
-			new ImmutableVector2f(405, 420),
-			new ImmutableVector2f(810, 420)
+			new ImmutableVector2f(Ball.RADIUS, Ball.RADIUS),
+			new ImmutableVector2f(405, Ball.RADIUS),
+			new ImmutableVector2f(810 - Ball.RADIUS, Ball.RADIUS),
+			new ImmutableVector2f(Ball.RADIUS, 420 - Ball.RADIUS),
+			new ImmutableVector2f(405, 420 - Ball.RADIUS),
+			new ImmutableVector2f(810 - Ball.RADIUS, 420 - Ball.RADIUS)
 	};
 	public static final int POCKET_RADIUS = Ball.RADIUS * 2;
 	
