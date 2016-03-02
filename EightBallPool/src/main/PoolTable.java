@@ -29,29 +29,31 @@ public class PoolTable {
 	private static final Ball[] BALL_PRESETS = new Ball[]{
 			new Ball(new Vector2f(200, 210), BallType.WHITE),
 			
-			new Ball(new Vector2f(Ball.RADIUS * -4, Ball.RADIUS * 0).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * -4, Ball.RADIUS * 0).add(racket), BallType.STRIPES),
 			
 			new Ball(new Vector2f(Ball.RADIUS * -2, Ball.RADIUS * 1).add(racket), BallType.SOLIDS),
-			new Ball(new Vector2f(Ball.RADIUS * -2, Ball.RADIUS * -1).add(racket), BallType.SOLIDS),
-			
+			new Ball(new Vector2f(Ball.RADIUS * -2, Ball.RADIUS * -1).add(racket), BallType.STRIPES),
+
+			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * 2).add(racket), BallType.STRIPES),
 			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * 0).add(racket), BallType.SOLIDS),
-			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * 2).add(racket), BallType.SOLIDS),
 			new Ball(new Vector2f(Ball.RADIUS * 0, Ball.RADIUS * -2).add(racket), BallType.SOLIDS),
 
-			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -3).add(racket), BallType.SOLIDS),
-			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -1).add(racket), BallType.SOLIDS),
-			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 1).add(racket), BallType.SOLIDS),
 			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 3).add(racket), BallType.SOLIDS),
-			
-			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 0).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * 1).add(racket), BallType.STRIPES),
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -1).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 2, Ball.RADIUS * -3).add(racket), BallType.STRIPES),
+
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 4).add(racket), BallType.STRIPES),
 			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 2).add(racket), BallType.SOLIDS),
-			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 4).add(racket), BallType.SOLIDS),
+			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * 0).add(racket), BallType.STRIPES),
 			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * -2).add(racket), BallType.SOLIDS),
 			new Ball(new Vector2f(Ball.RADIUS * 4, Ball.RADIUS * -4).add(racket), BallType.SOLIDS),
 	};
 	
 	// private BALL variables
 	protected ArrayList<Ball> balls;
+	protected Player[] players;
+	protected int playerTurnId = 0;
 	
 	// protected CUE variables
 	protected ImmutableVector2f cueDragNorm = new ImmutableVector2f(1, 0);
@@ -135,10 +137,15 @@ public class PoolTable {
 			return ballData.first();
 		}
 		
+		// minimum distance to border on axis
 		float dx = dirNorm.x > 0 ? PoolGame.WIDTH - pos.x : pos.x;
 		float dy = dirNorm.y > 0 ? PoolGame.HEIGHT - pos.y : pos.y;
+		
+		// factor in the radius of the ball
 		dx -= Ball.RADIUS;
 		dy -= Ball.RADIUS;
+		
+		// project dx and dy on dirNorm (modified form of scalar projection)
 		float distRightLeft = dirNorm.x == 0 ? Float.POSITIVE_INFINITY : Math.abs(dx / dirNorm.x);
 		float distUpDown = dirNorm.y == 0 ? Float.POSITIVE_INFINITY : Math.abs(dy / dirNorm.y);
 		
@@ -199,9 +206,15 @@ public class PoolTable {
 		HashMap<ImmutableVector2f, Float> possibleShots = new HashMap<ImmutableVector2f, Float>();
 		
 		// look at each target ball
+		BallType filter = players[playerTurnId].color;
 		for (Ball b : balls) {
 			if (b.type == BallType.WHITE || b.pocketed)
 				continue;
+			
+			if (filter != BallType.WHITE) { // should we use filter
+				if (b.type != filter)
+					continue;
+			}
 			
 			// find best shot
 			ImmutableVector2f bestShot = null;

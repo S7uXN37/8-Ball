@@ -56,6 +56,8 @@ public class PoolGame extends BasicGame {
 		super(title);
 		
 		table = new PoolTable();
+		table.players = new Player[]{new Player(0), new Player(1)};
+		Ball.table = table;
 	}
 	public PoolGame() {
 		this("Eight-ball Pool Game");
@@ -88,6 +90,12 @@ public class PoolGame extends BasicGame {
 			
 			g.setColor(b.color);
 			g.fillOval(b.getPos().x - Ball.RADIUS, b.getPos().y - Ball.RADIUS, Ball.RADIUS * 2, Ball.RADIUS * 2);
+			
+			BallType target = table.players[table.playerTurnId].color;
+			if (b.type == BallType.WHITE) {
+				g.setColor(Ball.getColor(target));
+				g.fillOval(b.getPos().x - Ball.RADIUS / 2f, b.getPos().y - Ball.RADIUS / 2f, Ball.RADIUS, Ball.RADIUS);
+			}
 		}
 		
 		if (table.cueReady) {
@@ -152,12 +160,15 @@ public class PoolGame extends BasicGame {
 			b.tick(delta);
 			allStopped &= b.isStopped();
 		}
+		
+		if (!table.cueReady && allStopped) {
+			table.playerTurnId = (table.playerTurnId + 1) % 2;
+		}
 		table.cueReady = allStopped;
-		if (table.cueReady) {
-			if (table.getWhite().pocketed) {
-				table.getWhite().respawn();
-				System.out.println("White pocketed, respawned");
-			}
+		
+		if (table.cueReady && table.getWhite().pocketed) {
+			table.getWhite().respawn();
+			System.out.println("White pocketed, respawned");
 		}
 		
 		for (Ball b : table.balls) {
@@ -205,16 +216,27 @@ public class PoolGame extends BasicGame {
 		
 		table.updateDistToCollision();
 		
-		int ballsAlive = 0;
+		int ballsAliveSol = 0;
+		int ballsAliveStr = 0;
 		for (Ball b : table.balls) {
-			if (!b.pocketed && b.type != BallType.WHITE)
-				ballsAlive++;
+			if (!b.pocketed && b.type != BallType.WHITE) {
+				switch (b.type) {
+				case SOLIDS:
+					ballsAliveSol++;
+					break;
+				case STRIPES:
+					ballsAliveStr++;
+					break;
+				default:
+					break;
+				}
+			}
 		}
 		
-		if (ballsAlive < 1) {
+		if (ballsAliveStr <= 0 || ballsAliveSol <= 0) {
 			if (allStopped && !allPocketed) {
 				allPocketed = true;
-				respawnTimer = 2f;
+				respawnTimer = 5f;
 			}
 		} else {
 			allPocketed = false;

@@ -7,13 +7,14 @@ import org.newdawn.slick.geom.Vector2f;
 
 public class Ball {
 	public static final int RADIUS = 10;
-	private static final Color SOLID_COLOR = new Color(0.905f, 0.213f, 0.129f);
-	private static final Color STRIPE_COLOR = Color.blue;
-	private static final Color WHITE_COLOR = Color.white;
+	public static final Color SOLID_COLOR = new Color(0.905f, 0.213f, 0.129f);
+	public static final Color STRIPE_COLOR = Color.blue;
+	public static final Color WHITE_COLOR = Color.white;
 	private static final float minSpeed = 10f;
 	private static final float fricAcc = -1f;
 	public enum BallType {STRIPES, SOLIDS, WHITE};
 	private static int nextId = 0;
+	public static PoolTable table;
 	
 	public Color color;
 	public BallType type;
@@ -25,17 +26,7 @@ public class Ball {
 	public boolean pocketed = false;
 	
 	public Ball(Vector2f spawnPos, BallType t) {
-		switch (t) {
-		case WHITE:
-			color = WHITE_COLOR;
-			break;
-		case SOLIDS:
-			color = SOLID_COLOR;
-			break;
-		case STRIPES:
-			color = STRIPE_COLOR;
-			break;
-		}
+		color = getColor(t);
 		
 		pos = spawnPos;
 		this.spawnPos = new ImmutableVector2f(spawnPos);
@@ -118,12 +109,40 @@ public class Ball {
 		return vels;
 	}
 	public void pocket() {
-		vel = new Vector2f(0, 0);
-		pocketed = true;
+		Player curr = table.players[table.playerTurnId];
+		if (curr.color == BallType.WHITE && type != BallType.WHITE) {
+			for (Player p : table.players) {
+				if (p.id == table.playerTurnId) {
+					p.color = type;
+				} else {
+					p.color = (type == BallType.SOLIDS) ? BallType.STRIPES : BallType.SOLIDS;
+				}
+			}
+		}
+		
+		if (type != curr.color && type != BallType.WHITE) {
+			respawn();
+		} else {
+			vel = new Vector2f(0, 0);
+			pocketed = true;
+		}
 	}
 	public void respawn() {
 		pos = spawnPos.makeVector2f();
 		vel = new Vector2f(0, 0);
 		pocketed = false;
+	}
+	
+	public static Color getColor(BallType t) {
+		switch(t) {
+		case WHITE:
+			return WHITE_COLOR;
+		case SOLIDS:
+			return SOLID_COLOR;
+		case STRIPES:
+			return STRIPE_COLOR;
+		default:
+			return null;
+		}
 	}
 }
