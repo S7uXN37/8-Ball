@@ -34,9 +34,9 @@ public class PoolGame extends BasicGame {
 	public static final int HEIGHT = 420;
 	
 	// private GUI constants
-	private static final Color BCKG_COLOR = Color.lightGray;
+	private static final Color BCKG_COLOR = new Color(0.2f, 0.6f, 0.2f);
 	private static final Color BORDER_COLOR = Color.black;
-	private static final Color POCKET_COLOR = new Color(0.2f, 0.2f, 0.2f, 0.2f);
+	private static final Color POCKET_COLOR = new Color(0f, 0f, 0f, 0.1f);
 	private static final Color WIN_COLOR = Color.orange;
 	
 	// private CUE constants

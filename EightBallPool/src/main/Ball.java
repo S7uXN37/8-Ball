@@ -7,7 +7,7 @@ import org.newdawn.slick.geom.Vector2f;
 
 public class Ball {
 	public static final int RADIUS = 10;
-	private static final Color SOLID_COLOR = Color.red;
+	private static final Color SOLID_COLOR = new Color(0.905f, 0.213f, 0.129f);
 	private static final Color STRIPE_COLOR = Color.blue;
 	private static final Color WHITE_COLOR = Color.white;
 	private static final float minSpeed = 10f;
