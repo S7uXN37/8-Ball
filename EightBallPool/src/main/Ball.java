@@ -110,6 +110,8 @@ public class Ball {
 	}
 	public void pocket() {
 		Player curr = table.players[table.playerTurnId];
+		
+		// set player color accordingly
 		if (curr.color == BallType.WHITE && type != BallType.WHITE) {
 			for (Player p : table.players) {
 				if (p.id == table.playerTurnId) {
@@ -120,12 +122,8 @@ public class Ball {
 			}
 		}
 		
-		if (type != curr.color && type != BallType.WHITE) {
-			respawn();
-		} else {
-			vel = new Vector2f(0, 0);
-			pocketed = true;
-		}
+		vel = new Vector2f(0, 0);
+		pocketed = true;
 	}
 	public void respawn() {
 		pos = spawnPos.makeVector2f();

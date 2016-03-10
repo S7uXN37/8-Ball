@@ -53,6 +53,7 @@ public class PoolTable {
 	// private BALL variables
 	protected ArrayList<Ball> balls;
 	protected Player[] players;
+	protected boolean keepPlayer = false;
 	protected int playerTurnId = 0;
 	
 	// protected CUE variables
@@ -291,5 +292,15 @@ public class PoolTable {
 			
 			balls.add(new Ball(spawn, t));
 		}
+	}
+	
+	public void setKeepPlayer(boolean keep) {
+		keepPlayer = keep;
+	}
+	public void nextTurn() {
+		if (!keepPlayer)
+			playerTurnId = (playerTurnId + 1) % 2;
+		
+		keepPlayer = false;
 	}
 }

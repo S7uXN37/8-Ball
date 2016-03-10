@@ -162,7 +162,7 @@ public class PoolGame extends BasicGame {
 		}
 		
 		if (!table.cueReady && allStopped) {
-			table.playerTurnId = (table.playerTurnId + 1) % 2;
+			table.nextTurn();
 		}
 		table.cueReady = allStopped;
 		
@@ -210,6 +210,13 @@ public class PoolGame extends BasicGame {
 			for (ImmutableVector2f p : PoolTable.POCKETS) {
 				if (b.getPos().sub(p).length() < PoolTable.POCKET_RADIUS) {
 					b.pocket();
+					
+					if (b.type != BallType.WHITE) {
+						// keep player if at least one own ball was pocketed
+						if (b.type == table.players[table.playerTurnId].color) {
+							table.setKeepPlayer(true);
+						}
+					}
 				}
 			}
 		}
