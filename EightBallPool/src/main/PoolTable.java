@@ -53,8 +53,10 @@ public class PoolTable {
 	// private BALL variables
 	protected ArrayList<Ball> balls;
 	protected Player[] players;
-	protected boolean keepPlayer = false;
 	protected int playerTurnId = 0;
+	protected boolean keepPlayer = false;
+	protected boolean hasHitBall = false;
+	protected boolean hasHitOwnBallFirst = true;
 	
 	// protected CUE variables
 	protected ImmutableVector2f cueDragNorm = new ImmutableVector2f(1, 0);
@@ -230,9 +232,11 @@ public class PoolTable {
 				if (optShot.dot(optVel) > 0) {
 					Map.Entry<Float, ArrayList<ImmutableVector2f>> raycastWhite = raycast(getWhitePos(), optShot, getWhite().id);
 					
+					float score = 0f;
+					
 					// don't add if a collision happens before we reach the ball
 					if (raycastWhite.getKey() < optShot.length() - 3 * Ball.RADIUS)
-						continue;
+						score -= 200f;
 					
 					Map.Entry<Float, ArrayList<ImmutableVector2f>> raycastBall = raycast(b.getPos(), optVel, b.id);
 					
@@ -241,12 +245,14 @@ public class PoolTable {
 						continue;
 					
 					// score = efficiency of shot
-					float score = raycastWhite.getValue().get(1).length();
+					score += raycastWhite.getValue().get(1).length();
 					
 					// decrease score if ball rebounds
 					if (raycastBall.getValue() != null) {
-						score -= 10f;
+						score -= 50f;
 					}
+					
+					System.out.println("Score: " + score);
 					
 					if (score > bestScore) {
 						bestShot = optShot;
@@ -284,7 +290,7 @@ public class PoolTable {
 		}
 	}
 	
-	protected void spawnBalls () {
+	protected void reset() {
 		balls = new ArrayList<Ball>();
 		for (Ball b : BALL_PRESETS) {
 			ImmutableVector2f spawn = new ImmutableVector2f(b.getPos());
@@ -292,15 +298,29 @@ public class PoolTable {
 			
 			balls.add(new Ball(spawn, t));
 		}
+		
+		for (Player p : players) {
+			p.color = BallType.WHITE;
+		}
 	}
 	
 	public void setKeepPlayer(boolean keep) {
 		keepPlayer = keep;
 	}
 	public void nextTurn() {
-		if (!keepPlayer)
+		if (!keepPlayer || getWhite().pocketed || !hasHitOwnBallFirst || !hasHitBall)
 			playerTurnId = (playerTurnId + 1) % 2;
 		
 		keepPlayer = false;
+		hasHitBall = false;
+		hasHitOwnBallFirst = false;
+	}
+	
+	public void regBallCollision(Ball b) {
+		if (!hasHitBall) {
+			hasHitOwnBallFirst = b.type == players[playerTurnId].color;
+		}
+
+		hasHitBall = true;
 	}
 }

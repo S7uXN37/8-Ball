@@ -147,7 +147,7 @@ public class PoolGame extends BasicGame {
 		gc.getInput().addMouseListener(listener);
 		
 		// create balls
-		table.spawnBalls();
+		table.reset();
 	}
 
 	@Override
@@ -185,6 +185,12 @@ public class PoolGame extends BasicGame {
 				
 				if (l < Ball.RADIUS * 2) {
 					Ball.ballCollision(b, b2, true);
+					
+					if (b.type == BallType.WHITE) {
+						table.regBallCollision(b2);
+					} else if (b2.type == BallType.WHITE) {
+						table.regBallCollision(b);
+					}
 				}
 			}
 			
@@ -250,7 +256,7 @@ public class PoolGame extends BasicGame {
 		}
 		
 		if (respawnTimer < 0 && allPocketed) {
-			table.spawnBalls();
+			table.reset();
 		}
 		respawnTimer -= delta / 1000f;
 	}
