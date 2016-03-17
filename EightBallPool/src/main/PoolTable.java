@@ -67,11 +67,14 @@ public class PoolTable {
 	protected ArrayList<ImmutableVector2f> estCollisions = new ArrayList<ImmutableVector2f>();
 	
 	protected void updateDistToCollision() {
-		Map.Entry<Float, ArrayList<ImmutableVector2f>> ret = raycast(getWhitePos(), cueDragNorm.scale(-1f), getWhite().id);
-		distToCollision = ret.getKey();
-
-		estCollisions = ret.getValue();
-		ballCollisionEstimated = ret.getValue() != null;
+		RaycastHit ret = raycast(getWhitePos(), cueDragNorm.scale(-1f), getWhite().id);
+		distToCollision = ret.distance;
+		
+		ArrayList<ImmutableVector2f> colls = new ArrayList<ImmutableVector2f>();
+		colls.add(ret.actorVelocity);
+		colls.add(ret.objectVelocity);
+		estCollisions = colls;
+		ballCollisionEstimated = ret.actorVelocity != null;
 	}
 	public void shoot(Vector2f shot) {
 		getWhite().addForce(shot);
@@ -99,17 +102,17 @@ public class PoolTable {
 		return balls.get(0);
 	}
 	
-	private Map.Entry<Float, ArrayList<ImmutableVector2f>> raycast(ImmutableVector2f pos, ImmutableVector2f dir, int idIgnore) {
+	private RaycastHit raycast(ImmutableVector2f pos, ImmutableVector2f dir, int idIgnore) {
 		ImmutableVector2f dirNorm = dir.normalise();
 		
-		SortedSet<Map.Entry<Float, ArrayList<ImmutableVector2f>>> ballData =
-				new TreeSet<Map.Entry<Float, ArrayList<ImmutableVector2f>>> (
-						new Comparator<Map.Entry<Float, ArrayList<ImmutableVector2f>>>() {
+		SortedSet<RaycastHit> ballData =
+				new TreeSet<RaycastHit> (
+						new Comparator<RaycastHit>() {
 							
 							@Override
-							public int compare(Entry<Float, ArrayList<ImmutableVector2f>> arg0,
-									Entry<Float, ArrayList<ImmutableVector2f>> arg1) {
-								return arg0.getKey().compareTo(arg1.getKey());
+							public int compare(RaycastHit arg0,
+									RaycastHit arg1) {
+								return arg0.getDistance().compareTo(arg1.distance);
 							}
 						}
 				);
@@ -152,48 +155,17 @@ public class PoolTable {
 		float distRightLeft = dirNorm.x == 0 ? Float.POSITIVE_INFINITY : Math.abs(dx / dirNorm.x);
 		float distUpDown = dirNorm.y == 0 ? Float.POSITIVE_INFINITY : Math.abs(dy / dirNorm.y);
 		
-		final float retDist = Math.min(distRightLeft, distUpDown);
-		return new Map.Entry<Float, ArrayList<ImmutableVector2f>>() {
-			@Override
-			public Float getKey() {
-				return retDist;
-			}
-			
-			@Override
-			public ArrayList<ImmutableVector2f> getValue() {
-				return null;
-			}
-			
-			@Override
-			public ArrayList<ImmutableVector2f> setValue(ArrayList<ImmutableVector2f> value) {
-				return null;
-			}
-		};
+		float retDist = Math.min(distRightLeft, distUpDown);
+		return new RaycastHit(null, null, null, retDist);
 	}
 	
-	private Entry<Float, ArrayList<ImmutableVector2f>> getBallRaycastData(float dist, ImmutableVector2f velNorm, ImmutableVector2f collPos, Ball b) {
+	private RaycastHit getBallRaycastData(float dist, ImmutableVector2f velNorm, ImmutableVector2f collPos, Ball b) {
 		Ball testBall = new Ball(collPos, BallType.WHITE);
 		testBall.addForce(velNorm.scale(20f));
 		
-		final float retDist = dist;
-		final ArrayList<ImmutableVector2f> retColl = Ball.ballCollision(testBall, b, false);
-		return new Map.Entry<Float, ArrayList<ImmutableVector2f>>() {
-
-			@Override
-			public Float getKey() {
-				return retDist;
-			}
-
-			@Override
-			public ArrayList<ImmutableVector2f> getValue() {
-				return retColl;
-			}
-
-			@Override
-			public ArrayList<ImmutableVector2f> setValue(ArrayList<ImmutableVector2f> value) {
-				return null;
-			}
-		};
+		RaycastHit coll = Ball.ballCollision(testBall, b, false);
+		coll.distance = dist;
+		return coll;
 	}
 	public void aiShoot() {
 		// set of entries, sorted by values
@@ -230,25 +202,25 @@ public class PoolTable {
 				
 				// if vectors point roughly in the same direction (angle between < 90°), add to map
 				if (optShot.dot(optVel) > 0) {
-					Map.Entry<Float, ArrayList<ImmutableVector2f>> raycastWhite = raycast(getWhitePos(), optShot, getWhite().id);
+					RaycastHit raycastWhite = raycast(getWhitePos(), optShot, getWhite().id);
 					
 					float score = 0f;
 					
 					// don't add if a collision happens before we reach the ball
-					if (raycastWhite.getKey() < optShot.length() - 3 * Ball.RADIUS)
+					if (raycastWhite.distance < optShot.length() - 3 * Ball.RADIUS)
 						score -= 200f;
 					
-					Map.Entry<Float, ArrayList<ImmutableVector2f>> raycastBall = raycast(b.getPos(), optVel, b.id);
+					RaycastHit raycastBall = raycast(b.getPos(), optVel, b.id);
 					
 					// don't add if collision doesn't trigger (angle too flat?)
-					if (raycastWhite.getValue() == null)
+					if (raycastWhite.actorVelocity == null)
 						continue;
 					
 					// score = efficiency of shot
-					score += raycastWhite.getValue().get(1).length();
+					score += raycastWhite.objectVelocity.length();
 					
 					// decrease score if ball rebounds
-					if (raycastBall.getValue() != null) {
+					if (raycastBall.actorVelocity != null) {
 						score -= 50f;
 					}
 					
@@ -322,5 +294,24 @@ public class PoolTable {
 		}
 
 		hasHitBall = true;
+	}
+}
+
+class RaycastHit {
+	final Ball other;
+	final ImmutableVector2f actorVelocity;
+	final ImmutableVector2f objectVelocity;
+	
+	float distance;
+	
+	public RaycastHit(Ball obj, ImmutableVector2f actorVel, ImmutableVector2f objectVel, float dist) {
+		other = obj;
+		actorVelocity = actorVel;
+		objectVelocity = objectVel;
+		distance = dist;
+	}
+
+	public Float getDistance() {
+		return new Float(distance);
 	}
 }

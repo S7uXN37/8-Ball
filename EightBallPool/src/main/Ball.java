@@ -85,28 +85,27 @@ public class Ball {
 		pos = new Vector2f(x, y);
 	}
 	
-	public static ArrayList<ImmutableVector2f> ballCollision(Ball b1, Ball b2, boolean apply) {
-		ArrayList<ImmutableVector2f> vels = new ArrayList<ImmutableVector2f>();
+	public static RaycastHit ballCollision(Ball actor, Ball object, boolean apply) {
+		RaycastHit hit;
 		
-		ImmutableVector2f toTarg = b2.getPos().sub(b1.getPos());
+		ImmutableVector2f toTarg = object.getPos().sub(actor.getPos());
 		ImmutableVector2f targNorm = toTarg.normalise();
-		ImmutableVector2f vRel = new ImmutableVector2f(b1.vel).sub(b2.vel);
+		ImmutableVector2f vRel = new ImmutableVector2f(actor.vel).sub(object.vel);
 		ImmutableVector2f velProj = targNorm.scale(vRel.dot(targNorm));
 		
-		vels.add(velProj.scale(-1f).add(b1.vel));
-		vels.add(velProj.add(b2.vel));
+		hit = new RaycastHit(object, velProj.scale(-1f).add(actor.vel), velProj.add(object.vel), -1f);
 		
 		if (apply) {
-			b1.vel = vels.get(0).makeVector2f();
-			b2.vel = vels.get(1).makeVector2f();
+			actor.vel = hit.actorVelocity.makeVector2f();
+			object.vel = hit.objectVelocity.makeVector2f();
 			
 			ImmutableVector2f displace = toTarg.sub(toTarg.normalise().scale(RADIUS * 2));
 			
-			b1.pos.add(displace.makeVector2f());
-			b2.pos.add(displace.scale(-1f).makeVector2f());
+			actor.pos.add(displace.makeVector2f());
+			object.pos.add(displace.scale(-1f).makeVector2f());
 		}
 		
-		return vels;
+		return hit;
 	}
 	public void pocket() {
 		Player curr = table.players[table.playerTurnId];
