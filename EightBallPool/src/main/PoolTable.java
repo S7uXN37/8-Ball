@@ -205,12 +205,39 @@ public class PoolTable {
 					RaycastHit raycastWhite = raycast(getWhitePos(), optShot, getWhite().id);
 					
 					float score = 0f;
+					boolean improved = false;
 					
-					// don't add if a collision happens before we reach the ball
-					if (raycastWhite.distance < optShot.length() - 3 * Ball.RADIUS)
-						score -= 200f;
+					// recalculate if a collision happens before we reach the ball
+					if (raycastWhite.distance < optShot.length() - 3 * Ball.RADIUS) {
+						Ball other = raycastWhite.other;
+						if (other.type == players[playerTurnId].color) {
+							ImmutableVector2f optPushShot;
+							
+							// push original ball
+							ImmutableVector2f optPushVel = optCollPoint.sub(other.getPos()).normalise();
+							ImmutableVector2f optPushCollPoint = other.getPos().add(optPushVel.scale(-2f * Ball.RADIUS));
+							optPushShot = optPushCollPoint.sub(getWhitePos());
+							
+							if (optPushShot.dot(optPushVel) > 0) {
+								RaycastHit pushRaycastWhite = raycast(getWhitePos(), optPushShot, getWhite().id);
+								RaycastHit pushRaycastOther = raycast(other.getPos(), optPushVel, other.id);
+								
+								// consider if no collisions in between
+								if (pushRaycastWhite.distance >= optPushShot.length() - 3 * Ball.RADIUS
+										&& pushRaycastOther.distance >= optPushVel.length() - 3 * Ball.RADIUS) {
+									raycastWhite = pushRaycastWhite;
+									optShot = optPushShot;
+									improved = true;
+									System.out.println("Shot improved");
+								}
+							}
+						}
+						
+						if (!improved) {
+							score -= 200;
+						}
+					}
 					
-					RaycastHit raycastBall = raycast(b.getPos(), optVel, b.id);
 					
 					// don't add if collision doesn't trigger (angle too flat?)
 					if (raycastWhite.actorVelocity == null)
@@ -219,9 +246,12 @@ public class PoolTable {
 					// score = efficiency of shot
 					score += raycastWhite.objectVelocity.length();
 					
-					// decrease score if ball rebounds
-					if (raycastBall.actorVelocity != null) {
-						score -= 50f;
+					if (!improved) {
+						RaycastHit raycastBall = raycast(b.getPos(), optVel, b.id);
+						// decrease score if ball collides
+						if (raycastBall.actorVelocity != null) {
+							score -= 50f;
+						}
 					}
 					
 					System.out.println("Score: " + score);
