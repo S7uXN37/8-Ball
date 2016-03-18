@@ -221,6 +221,7 @@ public class PoolGame extends BasicGame {
 						// keep player if at least one own ball was pocketed
 						if (b.type == table.players[table.playerTurnId].color) {
 							table.setKeepPlayer(true);
+							table.overrideOwnBallHit(true);
 						}
 					}
 				}

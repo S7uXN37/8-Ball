@@ -325,6 +325,11 @@ public class PoolTable {
 
 		hasHitBall = true;
 	}
+	
+	public void overrideOwnBallHit(boolean b) {
+		hasHitBall = b;
+		hasHitOwnBallFirst = b;
+	}
 }
 
 class RaycastHit {
