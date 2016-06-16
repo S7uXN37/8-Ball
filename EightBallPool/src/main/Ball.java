@@ -1,7 +1,5 @@
 package main;
 
-import java.util.ArrayList;
-
 import org.newdawn.slick.Color;
 import org.newdawn.slick.geom.Vector2f;
 
